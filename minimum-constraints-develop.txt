@@ -87,6 +87,9 @@ more-itertools==4.0.0
 # Safety CI by pyup.io
 safety==3.1.0
 safety-schemas==0.0.2
+# The following used by safety
+Levenshtein==0.25.1
+
 # TODO: Change to dparse 0.6.4 once released
 dparse==0.6.4b0
 ruamel.yaml==0.17.21
