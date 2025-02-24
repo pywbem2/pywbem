@@ -346,7 +346,7 @@ dist_dependent_files_all := \
 dist_dependent_files := $(filter-out $(version_file), $(dist_dependent_files_all))
 
 # Packages whose dependencies are checked using pip-missing-reqs
-check_reqs_packages := pytest coverage coveralls flake8 pylint safety sphinx notebook jupyter_console ipywidgets towncrier
+check_reqs_packages := pytest coverage coveralls flake8 pylint safety sphinx notebook jupyter towncrier
 
 PIP_INSTALL_CMD := $(PYTHON_CMD) -m pip install
 
