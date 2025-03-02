@@ -18,4 +18,17 @@ include pywbem/_vendor/nocasedict/LICENSE
 include pywbem/_vendor/nocaselist/LICENSE
 recursive-include tests *
 recursive-exclude tests *.pyc
-recursive-exclude tests/schema *
+recursive-exclude attic *
+recursive-exclude changes *
+recursive-exclude design *
+recursive-exclude dist *
+recursive-exclude docs *
+recursive-exclude examples *
+recursive-exclude images *
+recursive-exclude packaging *
+recursive-exclude perf *
+recursive-exclude .github *
+exclude .gitignore
+exclude DEVELOP.md
+exclude SECURITY.md
+exclude TODO.md

@@ -1,0 +1,13 @@
+Test: The files that were in the source archive were not sufficient to build,
+check and test the project using "make". To enable using "make", the following
+files have been added to the source distribution archive:
+
+  * done/ directory
+  * tools/ directory
+  * config files for tools (.flake8, etc)
+  * requirements and constraints files
+  * Makefile
+  * tox.ini
+
+The new set of files in the source distribution archive now allows to build,
+check and test the project using "make" from only that archive.
