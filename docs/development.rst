@@ -547,145 +547,118 @@ It covers all variants of versions that can be released:
 * Releasing a new update version (M.N.Unew) based on the stable branch of its
   minor version
 
-The description assumes that the ``pywbem/pywbem`` repo is cloned locally, and
-its upstream repo is assumed to have the remote name ``origin``.
+This description assumes that you are authorized to push to the remote repo
+at https://github.com/pywbem/pywbem and that the remote repo
+has the remote name ``origin`` in your local clone.
 
 Any commands in the following steps are executed in the main directory of your
 local clone of the ``pywbem/pywbem`` Git repo.
 
-1.  Set shell variables for the version that is being released and the branch
-    it is based on:
+1.  On GitHub, verify open items in milestone ``M.N.U``.
 
-    * ``MNU`` - Full version M.N.U that is being released
-    * ``MN`` - Major and minor version M.N of that full version
-    * ``BRANCH`` - Name of the branch the version that is being released is
-      based on
+    Verify that milestone ``M.N.U`` has no open issues or PRs anymore. If there
+    are open PRs or open issues, make a decision for each of those whether or
+    not it should go into version ``M.N.U`` you are about to release.
 
-    When releasing a new major version (e.g. ``1.0.0``) based on the master
+    If there are open issues or PRs that should go into this version, abandon
+    the release process.
+
+    If none of the open issues or PRs should go into this version, change their
+    milestones to a future version, and proceed with the release process. You
+    may need to create the milestone for the future version.
+
+2.  Run the Safety tool:
+
+    .. code-block:: sh
+
+        make safety
+
+    If any of the two safety runs fails, fix the safety issues that are reported,
+    in a separate branch/PR.
+
+    Roll back the PR into any maintained stable branches.
+
+3.  Check for any
+    `dependabot alerts <https://github.com/pywbem/pywbem/security/dependabot>`_.
+
+    If there are any dependabot alerts, fix them in a separate branch/PR.
+
+    Roll back the PR into any maintained stable branches.
+
+4.  Create and push the release branch (replace M,N,U accordingly):
+
+    .. code-block:: sh
+
+        VERSION=M.N.U make release_branch
+
+    This uses the default branch determined from ``VERSION``: For ``M.N.0``,
+    the ``master`` branch is used, otherwise the ``stable_M.N`` branch is used.
+    That covers for all cases except if you want to release a new minor version
+    based on an earlier stable branch. In that case, you need to specify that
     branch:
 
     .. code-block:: sh
 
-        MNU=1.0.0
-        MN=1.0
-        BRANCH=master
+        VERSION=M.N.0 BRANCH=stable_M.N make release_branch
 
-    When releasing a new minor version (e.g. ``0.9.0``) based on the master
-    branch:
+    This includes the following steps:
 
-    .. code-block:: sh
+    * create the release branch (``release_M.N.U``), if it does not yet exist
+    * make sure the AUTHORS.md file is up to date
+    * update the change log from the change fragment files, and delete those
+    * commit the changes to the release branch
+    * push the release branch
 
-        MNU=0.9.0
-        MN=0.9
-        BRANCH=master
+    If this command fails, the fix can be committed to the release branch
+    and the command above can be retried.
 
-    When releasing a new update version (e.g. ``0.8.1``) based on the stable
-    branch of its minor version:
-
-    .. code-block:: sh
-
-        MNU=0.8.1
-        MN=0.8
-        BRANCH=stable_${MN}
-
-2.  Create a topic branch for the version that is being released:
-
-    .. code-block:: sh
-
-        git checkout ${BRANCH}
-        git pull
-        git checkout -b release_${MNU}
-
-3.  Update the change log:
-
-    First make a dry-run to print the change log as it would be:
-
-    .. code-block:: sh
-
-        towncrier build --draft
-
-    If you are satisfied with the change log, update the change log:
-
-    .. code-block:: sh
-
-        towncrier build --yes
-
-    This will update the change log file ``docs/changes.rst`` with the
-    information from the change fragment files in the ``changes`` directory, and
-    will delete these change fragment files.
-
-4.  Edit the README file for PyPI:
-
-    .. code-block:: sh
-
-        vi README_PYPI.md
-
-    and update the constants near the top of the file:
-
-        .. |pywbem-version-mn| replace:: M.N
-        .. _Readme file on GitHub: https://github.com/pywbem/pywbem/blob/stable_M.N/README.md
-        .. _Documentation on RTD: https://pywbem.readthedocs.io/en/stable_M.N/
-        .. _Change log on RTD: https://pywbem.readthedocs.io/en/stable_M.N/changes.html
-
-5.  Run the Safety tool:
-
-    .. code-block:: sh
-
-        RUN_TYPE=release make safety
-
-    When releasing a version, the safety run for all dependencies will fail
-    if there are any safety issues reported. In normal and scheduled runs,
-    safety issues reported for all dependencies will be ignored.
-
-    If the safety run fails, you need to fix the safety issues that are
-    reported.
-
-6.  Commit your changes and push the topic branch to the remote repo:
-
-    .. code-block:: sh
-
-        git commit -asm "Release ${MNU}"
-        git push --set-upstream origin release_${MNU}
-
-7.  On GitHub, create a Pull Request for branch ``release_M.N.U``. This will
-    trigger the CI runs.
+5.  On GitHub, create a Pull Request for branch ``release_M.N.U``.
 
     Important: When creating Pull Requests, GitHub by default targets the
     ``master`` branch. When releasing based on a stable branch, you need to
     change the target branch of the Pull Request to ``stable_M.N``.
 
-    Set the milestone of that PR to version M.N.U.
+    Set the milestone of that PR to version ``M.N.U``.
+
+    This PR should normally be set to be reviewed by at least one of the
+    maintainers.
 
     The PR creation will cause the "test" workflow to run. That workflow runs
     tests for all defined environments, since it discovers by the branch name
     that this is a PR for a release.
 
-8.  On GitHub, close milestone ``M.N.U``.
-
-    Verify that the milestone has no open items anymore. If it does have open
-    items, investigate why and fix.
-
-9.  On GitHub, once the checks for the Pull Request for branch ``release_M.N.U``
-    have succeeded, merge the Pull Request (no review is needed). This
-    automatically deletes the branch on GitHub.
+6.  On GitHub, once the checks for that Pull Request have succeeded, merge the
+    Pull Request (no review is needed). This automatically deletes the branch
+    on GitHub.
 
     If the PR did not succeed, fix the issues.
 
-10. Publish the package
+7.  On GitHub, close milestone ``M.N.U``.
+
+    Verify that the milestone has no open items anymore. If it does have open
+    items, investigate why and fix (probably step 1 was not performed).
+
+8.  Publish the package (replace M,N,U accordingly):
 
     .. code-block:: sh
 
-        git checkout ${BRANCH}
-        git pull
-        git branch -D release_${MNU}
-        git branch -D -r origin/release_${MNU}
-        git tag -f ${MNU}
-        git push -f --tags
+        VERSION=M.N.U make release_publish
 
-    Pushing the new tag will cause the "publish" workflow to run. That workflow
-    builds the package, publishes it on PyPI, creates a release for it on Github,
-    and finally creates a new stable branch on Github if the master branch was
-    released.
+    or (see step 4):
+
+    .. code-block:: sh
+
+        VERSION=M.N.0 BRANCH=stable_M.N make release_publish
+
+    This includes the following steps:
+
+    * create and push the release tag
+    * clean up the release branch
+
+    Pushing the release tag will cause the "publish" workflow to run. That workflow
+    builds the package, publishes it on PyPI, creates a release for it on
+    GitHub, and finally creates a new stable branch on GitHub if the master
+    branch was released.
 
 11. Verify the publishing
 
@@ -717,7 +690,7 @@ local clone of the ``pywbem/pywbem`` Git repo.
 Starting a new version
 ----------------------
 
-This section shows the steps for starting development of a new version of pywbem.
+This section shows the steps for starting development of a new version.
 
 This section covers all variants of new versions:
 
@@ -726,97 +699,79 @@ This section covers all variants of new versions:
 * Starting a new update version (M.N.Unew) based on the stable branch of its
   minor version
 
-The description assumes that the ``pywbem/pywbem`` repo is cloned locally in a
-directory named ``pywbem``. Its upstream repo is assumed to have the remote name
-``origin``.
+This description assumes that you are authorized to push to the remote repo
+at https://github.com/pywbem/pywbem and that the remote repo
+has the remote name ``origin`` in your local clone.
 
 Any commands in the following steps are executed in the main directory of your
 local clone of the ``pywbem/pywbem`` Git repo.
 
-1.  Set shell variables for the version that is being started and the branch it
-    is based on:
+1.  Create and push the start branch (replace M,N,U accordingly):
 
-    * ``MNU`` - Full version M.N.U that is being started
-    * ``MN`` - Major and minor version M.N of that full version
-    * ``BRANCH`` -  Name of the branch the version that is being started is
-      based on
+    .. code-block:: sh
 
-    When starting a new major version (e.g. ``1.0.0``) based on the master
+        VERSION=M.N.U make start_branch
+
+    This uses the default branch determined from ``VERSION``: For ``M.N.0``,
+    the ``master`` branch is used, otherwise the ``stable_M.N`` branch is used.
+    That covers for all cases except if you want to start a new minor version
+    based on an earlier stable branch. In that case, you need to specify that
     branch:
 
     .. code-block:: sh
 
-        MNU=1.0.0
-        MN=1.0
-        BRANCH=master
+        VERSION=M.N.0 BRANCH=stable_M.N make start_branch
 
-    When starting a new minor version (e.g. ``0.9.0``) based on the master
-    branch:
+    This includes the following steps:
 
-    .. code-block:: sh
+    * create the start branch (``start_M.N.U``), if it does not yet exist
+    * create a dummy change
+    * commit and push the start branch (``start_M.N.U``)
 
-        MNU=0.9.0
-        MN=0.9
-        BRANCH=master
+2.  On GitHub, create a milestone for the new version ``M.N.U``.
 
-    When starting a new minor version (e.g. ``0.8.1``) based on the stable
-    branch of its minor version:
+    You can create a milestone in GitHub via Issues -> Milestones -> New
+    Milestone.
 
-    .. code-block:: sh
-
-        MNU=0.8.1
-        MN=0.8
-        BRANCH=stable_${MN}
-
-2.  Create a topic branch for the version that is being started:
-
-    .. code-block:: sh
-
-        git checkout ${BRANCH}
-        git pull
-        git checkout -b start_${MNU}
-
-3.  Commit your changes and push them to the remote repo:
-
-    .. code-block:: sh
-
-        git commit -asm "Start ${MNU}"
-        git push --set-upstream origin start_${MNU}
-
-4.  On GitHub, create a Pull Request for branch ``start_M.N.U``.
+3.  On GitHub, create a Pull Request for branch ``start_M.N.U``.
 
     Important: When creating Pull Requests, GitHub by default targets the
     ``master`` branch. When starting a version based on a stable branch, you
     need to change the target branch of the Pull Request to ``stable_M.N``.
 
-5.  On GitHub, create a milestone for the new version ``M.N.U``.
+    No review is needed for this PR.
 
-    You can create a milestone in GitHub via Issues -> Milestones -> New
-    Milestone.
+    Set the milestone of that PR to the new version ``M.N.U``.
 
-6.  On GitHub, go through all open issues and pull requests that still have
+4.  On GitHub, go through all open issues and pull requests that still have
     milestones for previous releases set, and either set them to the new
     milestone, or to have no milestone.
 
-7.  On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
+    Note that when the release process has been performed as described, there
+    should not be any such issues or pull requests anymore. So this step here
+    is just an additional safeguard.
+
+5.  On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
     have succeeded, merge the Pull Request (no review is needed). This
     automatically deletes the branch on GitHub.
 
-8.  Add release start tag and clean up the local repo:
-
-    Note: An initial tag is necessary because the automatic version calculation
-    done by setuptools-scm uses the most recent tag in the commit history and
-    increases the least significant part of the version by one, without
-    providing any controls to change that behavior.
+6.  Update and clean up the local repo (replace M,N,U accordingly):
 
     .. code-block:: sh
 
-        git checkout ${BRANCH}
-        git pull
-        git branch -D start_${MNU}
-        git branch -D -r origin/start_${MNU}
-        git tag -f ${MNU}a0
-        git push -f --tags
+        VERSION=M.N.U make start_tag
+
+    or (see step 1):
+
+    .. code-block:: sh
+
+        VERSION=M.N.0 BRANCH=stable_M.N make start_tag
+
+    This includes the following steps:
+
+    * checkout and pull the branch that was started (``master`` or ``stable_M.N``)
+    * delete the start branch (``start_M.N.U``) locally and remotely
+    * create and push the start tag (``M.N.Ua0``)
 
 
 .. _`Contributing`:
