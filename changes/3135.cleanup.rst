@@ -1,0 +1,3 @@
+Change the startup mode of the listener threads from daemon=True
+to daemon=False.  This insures that the threads are stopped when the listener
+is closed or fails.

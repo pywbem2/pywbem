@@ -134,7 +134,8 @@ this effectively stops the listener, it should only be used if the number of
 indications in the queue is a threat to the memory in the client, not for
 temporary slowdown of the flow of indications from the indication sender.
 
-It closes the listener connections and discards indications in the queue.
+It closes the listener connections and  either discards indications in the queue
+or .
 
 The following example creates and runs a listener::
 
@@ -964,13 +965,13 @@ class WBEMListener:
         self._callbacks = []  # Registered callback functions
 
         if not isinstance(max_ind_queue_size, int):
-            raise TypeError("max_ind_queue_size argument must be aninteger.")
+            raise TypeError("max_ind_queue_size argument must be integer.")
         if max_ind_queue_size < 0:
             raise ValueError(
                 "max__ind_queue_size argument must be positive integer.")
         self._max_ind_queue_size = max_ind_queue_size
 
-        # Define timeout in seconds for gets on ind_delivery_queue
+        # Define timeout in seconds for gets on ind_delivery_queue object.
         # Causes wait after indication queue get if queue is empty.
         # Choice of 2 seconds was arbitrary.
         #
@@ -1191,7 +1192,9 @@ class WBEMListener:
         assert not self.ind_delivery_queue
 
         # Create received indication inter_thread queue and set queue max size
-        # if max_ind_queue_size param is set
+        # Note: value 0 disables the test for queue full
+        # Uses Queue and not SimpleQueue because SimpleQueue does not support
+        # queue.qsize() and queue.Full() exception.
         self.ind_delivery_queue = queue.Queue(
             maxsize=self._max_ind_queue_size)
 
@@ -1200,7 +1203,7 @@ class WBEMListener:
             target=self.deliver_indications_forever,
             args=(self.ind_delivery_queue,),
             name='Callback',
-            daemon=True)
+            daemon=False)
 
         self.callback_thread.start()
         self.logger.info("Callback thread started max_queue=%s",
@@ -1230,7 +1233,7 @@ class WBEMListener:
                 server.listener = self
                 thread = ServerThread(target=server.serve_forever,
                                       name='http',
-                                      daemon=True)
+                                      daemon=False)
                 # Insure thread is stopped on main thread exit
                 self._http_server = server
                 self._http_thread = thread
@@ -1326,7 +1329,7 @@ class WBEMListener:
 
                 thread = ServerThread(target=server.serve_forever,
                                       name="https",
-                                      daemon=True)
+                                      daemon=False)
 
                 self._https_server = server
                 self._https_thread = thread
@@ -1356,8 +1359,8 @@ class WBEMListener:
         If immediate is True, indications are cleared from the queue without
         calling the callbacks.
 
-        If force is False, indications are forwarded to the callback until
-        the queue is empty before stopping delivery.
+        If immdeiate is False, (default) indications are forwarded to the
+        callback until the queue is empty before stopping delivery.
         """
         # Callback thread could already be stopped by FullQueue exception.
         if not self.callback_thread:
@@ -1369,7 +1372,7 @@ class WBEMListener:
                 self.logger.debug("Wait for delivery queue to empty")
                 sleep(0.1)
         else:
-            # clear the queue immediatly
+            # clear the queue immediately
             clr_count = 0
             while not self.ind_delivery_queue.empty():
                 self.ind_delivery_queue.get(block=False, timeout=0)
@@ -1470,15 +1473,15 @@ class WBEMListener:
             # Do not block put to queue. It puts or raises the Full exception
             self.ind_delivery_queue.put((indication, host), block=False)
             self.logger.debug(
-                "Rcvd indication queue put done. queue_size #%s",
+                "Rcvd indication queue put done. queue_size %s",
                 self.queue_size())
 
         except queue.Full:
             self.logger.debug(
                 "Rcvd indication queue full. ListenerQueueFullError Exception, "
-                "queue_size = #%s", self.queue_size)
+                "queue_size = %s", self.queue_size)
             new_exc = ListenerQueueFullError(
-                "Listener indiation delivery queue full, "
+                "Listener indication delivery queue full, "
                 f"queue_size = {self.queue_size}. Closing listener.")
             new_exc.__cause__ = None
             raise new_exc  # ListenerQueueFullError
