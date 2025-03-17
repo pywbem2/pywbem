@@ -84,14 +84,20 @@ environment:
 $ pip install pywbem
 ```
 
+or, if you want to use [uv](https://docs.astral.sh/uv/):
+
+``` bash
+$ uv pip install pywbem
+```
+
 This will also install any prerequisite Python packages.
 
 Starting with version 1.0.0, pywbem has no OS-level prerequisite packages.
 
-On newer versions of some operating systems(ex. Ubuntu 23.04, Debian 12)
-pywbem will only install into a virtual environment. This is by design
-to avoid conflicts between OS distributed python packages and other user
-installed packages and is documented in
+On newer versions of some operating systems (ex. Ubuntu 23.04, Debian 12)
+pip will install Python packages only into virtual Python environments. This is
+by design to avoid conflicts between OS distributed python packages and other
+user installed packages and is documented in
 [Python PEP 668](https://peps.python.org/pep-0668/). See the pywbem documentation
 [Troubleshooting section](https://pywbem.readthedocs.io/en/latest/appendix.html#troubleshooting)
 for more information if an \"Externally-managed-environment\" error

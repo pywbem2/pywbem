@@ -137,9 +137,9 @@ operating system packages in addition to Python itself.
     - wheel
     - pip
     - On newer versions of some operating systems(ex. Ubuntu 23.04, Debian 12)
-      pywbem can only be installed in a virtual environment so a virtual
-      environment (ex. virtualenv), etc. must also be installed. See
-      ref:`Install fails, Externally-managed-environment error` for more
+      pip will install Python packages only into virtual Python environments,
+      so a virtual environment (ex. virtualenv), etc. must also be installed.
+      See ref:`Install fails, Externally-managed-environment error` for more
       information.
 
 * Install pywbem (and its prerequisite Python packages) into the active Python
@@ -148,6 +148,16 @@ operating system packages in addition to Python itself.
   .. code-block:: bash
 
       $ pip install pywbem
+
+  If you want to use `uv <https://docs.astral.sh/uv/>`_ for installing Python
+  packages, this can be done with:
+
+  .. code-block:: bash
+
+      $ uv pip install pywbem
+
+  In the following sections, only the installation with "pip" is described, but
+  "uv" can be used as well.
 
   This will also install any prerequisite Python packages.
 
